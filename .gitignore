@@ -1,0 +1,8 @@
+GROQ_API_KEY.txt
+project/node_modules
+server/venv
+dist/
+.env
+.DS_Store
+.orchids/
+*.csv

@@ -1,0 +1,7 @@
+{
+  "startupCommands": [
+    "npm install; npm run dev -- --host 0.0.0.0 --port 5173"
+  ],
+  "projectId": "ff018b7e-9d6d-4acb-99c6-4f56e50620b5",
+  "templateId": "any"
+}
