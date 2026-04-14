@@ -17,7 +17,7 @@ def get_groq_key():
         print(f"Error reading API key: {e}")
         return None
 
-GROQ_API_KEY = get_groq_key()
+GROQ_API_KEY = "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"
 client = Groq(api_key=GROQ_API_KEY)
 
 app = FastAPI(title="Om Project Analytics API")
