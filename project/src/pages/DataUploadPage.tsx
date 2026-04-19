@@ -1,15 +1,18 @@
 import { useState, useRef, type DragEvent, type ChangeEvent} from 'react';
 import { Upload, FileText, CheckCircle, XCircle, Play, RefreshCw } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { previewData } from '../data/mockData';
 
 type UploadState = 'idle' | 'dragging' | 'uploaded' | 'processing' | 'done' | 'error';
 
 export default function DataUploadPage() {
+  const navigate = useNavigate();
   const [uploadState, setUploadState] = useState<UploadState>('idle');
   const [fileName, setFileName] = useState('');
   const [fileSize, setFileSize] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [errorMessage, setErrorMessage] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
@@ -39,22 +42,37 @@ export default function DataUploadPage() {
     if (!file) return;
     setUploadState('processing');
     setProgress(10);
+    setErrorMessage('');
     
     const formData = new FormData();
     formData.append('file', file);
 
     try {
+      setProgress(30);
       const response = await fetch('http://localhost:8000/upload-csv', {
         method: 'POST',
         body: formData,
       });
 
-      if (!response.ok) throw new Error('Processing failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Processing failed' }));
+        throw new Error(errorData.detail || 'Processing failed');
+      }
+      
+      setProgress(80);
+      const result = await response.json();
+      console.log('Upload response:', result);
       
       setProgress(100);
       setUploadState('done');
+      
+      // Redirect to dashboard after 2 seconds
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 2000);
     } catch (err) {
-      console.error(err);
+      console.error('Upload error:', err);
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to process file');
       setUploadState('error');
     }
   };
@@ -66,6 +84,7 @@ export default function DataUploadPage() {
     setFile(null);
     setShowPreview(false);
     setProgress(0);
+    setErrorMessage('');
     if (fileRef.current) fileRef.current.value = '';
   };
 
@@ -223,7 +242,31 @@ export default function DataUploadPage() {
           <div>
             <p style={{ fontSize: 14, fontWeight: 600, color: '#15803d' }}>Data processed successfully!</p>
             <p style={{ fontSize: 13, color: '#4ade80' }}>
-              5 rows × 8 columns cleaned and ingested. Head to the Dashboard to view your analytics.
+              Redirecting to Dashboard to view your analytics...
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Error */}
+      {uploadState === 'error' && (
+        <div
+          style={{
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: 14,
+            padding: '18px 24px',
+            marginBottom: 24,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <XCircle size={20} color="#dc2626" />
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#dc2626' }}>Error processing file</p>
+            <p style={{ fontSize: 13, color: '#ef5350' }}>
+              {errorMessage || 'Please check your file and try again'}
             </p>
           </div>
         </div>
